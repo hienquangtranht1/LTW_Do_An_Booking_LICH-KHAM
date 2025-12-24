@@ -18,122 +18,94 @@ namespace BookinhMVC.Controllers
             _context = context;
         }
 
-        // Hiển thị form đăng nhập CSKH
+        // --- 1. Đăng nhập ---
         [HttpGet]
         [Route("/CSKH/Login")]
         public IActionResult Login()
         {
+            if (HttpContext.Session.GetInt32("CSKHId") != null) return RedirectToAction("Dashboard");
             return View();
         }
 
-        // Xử lý đăng nhập CSKH từ bảng CsKhs (không dùng NguoiDungs)
         [HttpPost]
         [Route("/CSKH/Login")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(string username, string password)
         {
-            // Truy vấn từ bảng CsKhs
             var cskh = await _context.CsKhs.FirstOrDefaultAsync(c => c.Username == username);
-            if (cskh != null)
+            if (cskh != null && cskh.Password == password) // Thực tế nên mã hóa mật khẩu
             {
-                // Nếu mật khẩu được mã hóa, bạn cần giải mã hoặc dùng IPasswordHasher tương ứng.
-                // Ở đây, giả sử mật khẩu được lưu trực tiếp (plain text) để đơn giản:
-                if (cskh.Password == password)
-                {
-                    // Lưu thông tin CSKH vào session. Ví dụ, giả sử CsKh có các thuộc tính Id (khóa chính) và FullName.
-                    HttpContext.Session.SetInt32("CSKHId", cskh.Id);
-                    HttpContext.Session.SetString("CSKHName", cskh.FullName);
-                    HttpContext.Session.SetString("UserRole", "CSKH");
-                    return RedirectToAction("Dashboard", "CSKH");
-                }
+                HttpContext.Session.SetInt32("CSKHId", cskh.Id);
+                HttpContext.Session.SetString("CSKHName", cskh.FullName);
+                HttpContext.Session.SetString("UserRole", "CSKH"); // Đánh dấu Role để Hub nhận biết
+                return RedirectToAction("Dashboard");
             }
-            ModelState.AddModelError("", "Tên đăng nhập hoặc mật khẩu không đúng.");
+            ViewData["Error"] = "Tài khoản hoặc mật khẩu không đúng.";
             return View();
         }
 
-        // Đăng xuất CSKH
         [HttpPost]
         [Route("/CSKH/Logout")]
         [ValidateAntiForgeryToken]
         public IActionResult Logout()
         {
-            HttpContext.Session.Remove("CSKHId");
-            HttpContext.Session.Remove("CSKHName");
-            HttpContext.Session.Remove("UserRole");
+            HttpContext.Session.Clear();
             return RedirectToAction("Login");
         }
 
-        // Dashboard CSKH: danh sách khách hàng và chat (chỉ cho CSKH)
+        // --- 2. Dashboard Chính ---
         [HttpGet]
         [Route("/CSKH/Dashboard")]
-        public async Task<IActionResult> Dashboard(int? customerId)
+        public async Task<IActionResult> Dashboard()
         {
             var cskhId = HttpContext.Session.GetInt32("CSKHId");
-            var role = HttpContext.Session.GetString("UserRole");
-            if (cskhId == null || string.IsNullOrEmpty(role) || role != "CSKH")
-                return RedirectToAction("Login");
-
-            ViewBag.CSKHId = cskhId;
+            if (cskhId == null) return RedirectToAction("Login");
 
             var cskh = await _context.CsKhs.FindAsync(cskhId);
-
-            // Lấy tất cả khách hàng đã từng chat với CSKH này (gửi hoặc nhận)
-            var customerIds = await _context.ChatMessages
-                .Where(m => m.ReceiverId == cskhId || m.SenderId == cskhId)
-                .Select(m => m.SenderId == cskhId ? m.ReceiverId : m.SenderId)
-                .Distinct()
-                .ToListAsync();
-
-            var customers = await _context.NguoiDungs
-                .Where(u => customerIds.Contains(u.MaNguoiDung))
-                .ToListAsync();
-
-            ViewBag.Customers = customers;
-            ViewBag.CurrentCustomerId = customerId;
-
-            if (customerId != null)
-            {
-                var messages = await _context.ChatMessages
-                    .Where(m =>
-                        (m.SenderId == customerId && m.ReceiverId == cskhId) ||
-                        (m.SenderId == cskhId && m.ReceiverId == customerId))
-                    .OrderBy(m => m.CreatedAt)
-                    .ToListAsync();
-                ViewBag.Messages = messages;
-            }
-            else
-            {
-                ViewBag.Messages = null;
-            }
-
             return View(cskh);
         }
 
-        // Gửi tin nhắn từ CSKH đến khách hàng (chỉ cho CSKH)
-        [HttpPost]
-        [Route("/CSKH/SendMessage")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SendMessage(int receiver_id, string message)
+        // --- 3. API Lấy lịch sử chat (Dành riêng cho CSKH) ---
+        [HttpGet]
+        [Route("/CSKH/GetHistory")]
+        public async Task<IActionResult> GetHistory(int customerId)
         {
-            var cskhId = HttpContext.Session.GetInt32("CSKHId");
-            var role = HttpContext.Session.GetString("UserRole");
-            if (cskhId == null || string.IsNullOrEmpty(role) || role != "CSKH")
-                return RedirectToAction("Login");
+            var myId = HttpContext.Session.GetInt32("CSKHId");
+            if (myId == null) return Unauthorized();
 
-            if (receiver_id == 0 || string.IsNullOrWhiteSpace(message))
-                return RedirectToAction("Dashboard", new { customerId = receiver_id });
+            var messages = await _context.ChatMessages
+                .Where(m =>
+                    // Tin mình gửi đi
+                    (m.SenderId == myId && m.SenderRole == "CSKH" && m.ReceiverId == customerId) ||
+                    // Tin khách gửi đến
+                    (m.SenderId == customerId && m.SenderRole == "KhachHang" && m.ReceiverId == myId)
+                )
+                .OrderBy(m => m.CreatedAt)
+                .Select(m => new {
+                    message = m.Message,
+                    isMe = (m.SenderId == myId && m.SenderRole == "CSKH"), // Xác định chủ sở hữu
+                    time = m.CreatedAt.ToString("HH:mm dd/MM")
+                })
+                .ToListAsync();
 
-            var chatMessage = new ChatMessage
-            {
-                SenderId = cskhId.Value,
-                ReceiverId = receiver_id,
-                Message = message.Trim(),
-                CreatedAt = DateTime.Now
-            };
-            _context.ChatMessages.Add(chatMessage);
-            await _context.SaveChangesAsync();
+            return Json(messages);
+        }
+        [HttpGet]
+        public IActionResult GetListCSKHJson()
+        {
+            // Lấy danh sách ID đang online từ OnlineUserMap (thread-safe snapshot)
+            var onlineIds = Helpers.OnlineUserMap.Snapshot().ToHashSet();
 
-            return RedirectToAction("Dashboard", new { customerId = receiver_id });
+            // Chỉ lấy nhân viên có trong danh sách Online
+            var list = _context.CsKhs
+                .Where(c => onlineIds.Contains(c.Id))
+                .Select(c => new {
+                    id = c.Id,
+                    fullName = c.FullName
+                })
+                .ToList();
+
+            return Json(list);
         }
     }
 }

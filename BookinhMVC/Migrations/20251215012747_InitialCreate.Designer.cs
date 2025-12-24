@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BookinhMVC.Migrations
 {
     [DbContext(typeof(BookingContext))]
-    [Migration("20250623070853_init")]
-    partial class init
+    [Migration("20251215012747_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,62 @@ namespace BookinhMVC.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("BookinhMVC.Models.Article", b =>
+                {
+                    b.Property<int>("ArticleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ArticleId"));
+
+                    b.Property<int>("AuthorId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(MAX)");
+
+                    b.Property<string>("FeatureImageUrl")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<bool>("IsPublished")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("PublishDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("Summary")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<int>("ViewsCount")
+                        .HasColumnType("int");
+
+                    b.HasKey("ArticleId");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex("CategoryId");
+
+                    b.ToTable("Articles");
+                });
 
             modelBuilder.Entity("BookinhMVC.Models.BacSi", b =>
                 {
@@ -78,42 +134,61 @@ namespace BookinhMVC.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("DiaChi")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Email")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("GioiTinh")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("HinhAnhBenhNhan")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("HoTen")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("NgaySinh")
+                    b.Property<DateTime?>("NgaySinh")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("NgayTao")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("SoBaoHiem")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SoDienThoai")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("MaBenhNhan");
 
                     b.ToTable("BenhNhans");
+                });
+
+            modelBuilder.Entity("BookinhMVC.Models.Category", b =>
+                {
+                    b.Property<int>("CategoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CategoryId"));
+
+                    b.Property<string>("CategoryName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("NgayTao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("CategoryId");
+
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("BookinhMVC.Models.ChatMessage", b =>
@@ -214,6 +289,70 @@ namespace BookinhMVC.Migrations
                     b.ToTable("DanhGias");
                 });
 
+            modelBuilder.Entity("BookinhMVC.Models.GiaoDichThanhToan", b =>
+                {
+                    b.Property<int>("MaGiaoDich")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaGiaoDich"));
+
+                    b.Property<string>("GhiChu")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("LoaiGiaoDich")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("MaBenhNhan")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MaLich")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MaThamChieu")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("MoTa")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime?>("NgayCapNhat")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("NgayGiaoDich")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NguoiXuLy")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("NoiDung")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("PhuongThucThanhToan")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal>("SoTien")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<string>("TrangThai")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("MaGiaoDich");
+
+                    b.HasIndex("MaBenhNhan");
+
+                    b.HasIndex("MaLich");
+
+                    b.ToTable("GiaoDichThanhToan");
+                });
+
             modelBuilder.Entity("BookinhMVC.Models.HoSoBenhAn", b =>
                 {
                     b.Property<int>("MaHoSo")
@@ -280,6 +419,9 @@ namespace BookinhMVC.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaLich"));
 
+                    b.Property<bool>("DaThongBao")
+                        .HasColumnType("bit");
+
                     b.Property<int>("MaBacSi")
                         .HasColumnType("int");
 
@@ -287,6 +429,9 @@ namespace BookinhMVC.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime>("NgayGio")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("NgayTao")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("TrangThai")
@@ -390,7 +535,6 @@ namespace BookinhMVC.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Content")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
@@ -400,11 +544,9 @@ namespace BookinhMVC.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Status")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Title")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("UserId")
@@ -417,6 +559,91 @@ namespace BookinhMVC.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Questions");
+                });
+
+            modelBuilder.Entity("BookinhMVC.Models.TaiKhoanBenhNhan", b =>
+                {
+                    b.Property<int>("MaBenhNhan")
+                        .HasColumnType("int");
+
+                    b.Property<string>("GhiChu")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("NgayCapNhatCuoi")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("NgayTao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("SoDuHienTai")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<decimal>("TongTienChi")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<decimal>("TongTienNap")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<string>("TrangThai")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("MaBenhNhan");
+
+                    b.ToTable("TaiKhoanBenhNhan");
+                });
+
+            modelBuilder.Entity("BookinhMVC.Models.ThongBao", b =>
+                {
+                    b.Property<int>("MaThongBao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaThongBao"));
+
+                    b.Property<bool>("DaXem")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("MaLichHen")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaNguoiDung")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("NgayTao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NoiDung")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TieuDe")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("MaThongBao");
+
+                    b.ToTable("ThongBaos");
+                });
+
+            modelBuilder.Entity("BookinhMVC.Models.Article", b =>
+                {
+                    b.HasOne("BookinhMVC.Models.NguoiDung", "Author")
+                        .WithMany("Articles")
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BookinhMVC.Models.Category", "Category")
+                        .WithMany("Articles")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+
+                    b.Navigation("Category");
                 });
 
             modelBuilder.Entity("BookinhMVC.Models.BacSi", b =>
@@ -466,6 +693,22 @@ namespace BookinhMVC.Migrations
                     b.Navigation("BacSi");
 
                     b.Navigation("BenhNhan");
+                });
+
+            modelBuilder.Entity("BookinhMVC.Models.GiaoDichThanhToan", b =>
+                {
+                    b.HasOne("BookinhMVC.Models.BenhNhan", "BenhNhan")
+                        .WithMany("GiaoDichThanhToans")
+                        .HasForeignKey("MaBenhNhan")
+                        .IsRequired();
+
+                    b.HasOne("BookinhMVC.Models.LichHen", "LichHen")
+                        .WithMany()
+                        .HasForeignKey("MaLich");
+
+                    b.Navigation("BenhNhan");
+
+                    b.Navigation("LichHen");
                 });
 
             modelBuilder.Entity("BookinhMVC.Models.HoSoBenhAn", b =>
@@ -534,6 +777,17 @@ namespace BookinhMVC.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("BookinhMVC.Models.TaiKhoanBenhNhan", b =>
+                {
+                    b.HasOne("BookinhMVC.Models.BenhNhan", "BenhNhan")
+                        .WithOne()
+                        .HasForeignKey("BookinhMVC.Models.TaiKhoanBenhNhan", "MaBenhNhan")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BenhNhan");
+                });
+
             modelBuilder.Entity("BookinhMVC.Models.BacSi", b =>
                 {
                     b.Navigation("DanhGias");
@@ -549,9 +803,16 @@ namespace BookinhMVC.Migrations
                 {
                     b.Navigation("DanhGias");
 
+                    b.Navigation("GiaoDichThanhToans");
+
                     b.Navigation("HoSoBenhAns");
 
                     b.Navigation("LichHens");
+                });
+
+            modelBuilder.Entity("BookinhMVC.Models.Category", b =>
+                {
+                    b.Navigation("Articles");
                 });
 
             modelBuilder.Entity("BookinhMVC.Models.Khoa", b =>
@@ -561,6 +822,8 @@ namespace BookinhMVC.Migrations
 
             modelBuilder.Entity("BookinhMVC.Models.NguoiDung", b =>
                 {
+                    b.Navigation("Articles");
+
                     b.Navigation("BacSi")
                         .IsRequired();
 
